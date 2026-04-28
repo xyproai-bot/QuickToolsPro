@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>QuickToolsPro2.0</title>
+  <link rel="stylesheet" href="./client/globals.css" />
+  <link rel="stylesheet" href="./client/styleguide.css" />
+  <link rel="stylesheet" href="./client/style.css" />
+</head>
+
+<body>
+  <div id="tooltip-global" class="tooltip-global"></div>
+  <div id="qtp-toast"></div>
+  <div class="tool-container">
+        <div class="about-panel" id="aboutPanel">
+          <h3>QuickTools Pro 2.0</h3>
+          <p>Developed by Xavier Chu</p>
+          <p>© 2025 xc232192@gmail.com</p>
+          <button id="closeAbout">Close</button>
+        </div>
+  <main class="tool">
+    <section class="control">
+      <nav class="quick-tools" aria-label="Quick Tools">
+        <button class="about-btn">
+          <img class="img" src="./icons/img/xcLogo.svg" alt="" />
+        </button>
+        <div class="divider"></div>
+        <!-- Path Tools -->
+        <button class="img-wrapper" aria-label="Select Path" data-tooltip-info="Selected all path in layers">
+          <img class="img" src="./icons/img/btn_selectPath.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Control Path" data-tooltip-info="Make null to control path">
+          <img class="img" src="./icons/img/btn_controlPath.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Motion Path"
+          data-tooltip-info="Selected follow layers frist, select path property to control motion last, control with apply on layer of path. Shift + Click to make control on follow layers">
+          <img class="img" src="./icons/img/btn_motionPath.svg" alt="" />
+        </button>
+        <div class="divider"></div>
+        <!-- Shape Tools -->
+        <button class="img-wrapper" aria-label="Merge"
+          data-tooltip-info="Merge selected shape layers to one shape layer. Shift click to delete orginal layers after merge.">
+          <img class="img" src="./icons/img/btn_merge.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Split"
+          data-tooltip-info="Select shape layers or contents to split to each shape layers">
+          <img class="img" src="./icons/img/btn_split.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Rename" data-tooltip-info="Tool to quick rename multi layers">
+          <img class="img" src="./icons/img/btn_rename.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Expression"
+          data-tooltip-info="Tool to quick apply/remove/save expression">
+          <img class="img" src="./icons/img/btn_expression.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Offset"
+          data-tooltip-info="Tool to offset/trim multi layers or keyframes">
+          <img class="img" src="./icons/img/btn_offset.svg" alt="" />
+        </button>
+        <div class="divider"></div>
+        <!-- Comp Tools -->
+        <button class="img-wrapper" aria-label="Un-Precomp">
+          <img class="img" src="./icons/img/btn_unPrecomp.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="DUP-Comp">
+          <img class="img" src="./icons/img/btn_dupComp.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Text Tool" data-tooltip-info="Tool to split text and set box text">
+          <img class="img" src="./icons/img/btn_textTool.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Scale Fit"
+          data-tooltip-info="Scale selected layers to fit comp. Click = Contain, Shift = Cover, Alt = Fill (stretch)">
+          <img class="img" src="./icons/img/btn_scalefit.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Smart Precomp"
+          data-tooltip-info="Precompose selected layers, keeping position. Auto-names as Pre-[name]">
+          <img class="img" src="./icons/img/btn_smartprecomp.svg" alt="" />
+        </button>
+        <div class="divider"></div>
+        <!-- Animation Tools -->
+        <button class="img-wrapper" aria-label="Effector"
+          data-tooltip-info="Tool to make Control Effector for select property">
+          <img class="img" src="./icons/img/btn_effector.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Ani-Marker"
+          data-tooltip-info="Make marker to control selected keyframes. Shift + Click to make null control with marker for all layer have selected keyframes">
+          <img class="img" src="./icons/img/btn_aniMarker.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Randomize"
+          data-tooltip-info="Tool to make randomize with select property">
+          <img class="img" src="./icons/img/btn_random.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Wiggle"
+          data-tooltip-info="Wiggle Controller with Slider Controls for selected layers">
+          <img class="img" src="./icons/img/btn_wiggle.svg" alt="" />
+        </button>
+        <button class="img-wrapper" aria-label="Sequence"
+          data-tooltip-info="Sequence selected layers in time. Set overlap frames below.">
+          <img class="img" src="./icons/img/btn_sequence.svg" alt="" />
+        </button>
+        <button class="toggle-labels-btn" aria-label="Show Names">
+
+        </button>
+      </nav>
+      <div class="break-line"></div>
+      <!-- Collect progress overlay -->
+      <!-- Sequence overlay -->
+      <div id="sequence-overlay" class="collect-overlay" style="display:none">
+        <div class="collect-box">
+          <p class="collect-title">Sequence Layers</p>
+          <div class="seq-row">
+            <label class="text-wrapper-3">Overlap</label>
+            <input type="number" id="seq-overlap" class="input" value="0" min="0" style="width:52px" />
+            <label class="text-wrapper-3">frames</label>
+          </div>
+          <div class="seq-row" style="margin-top:6px">
+            <label class="radio"><input type="checkbox" id="seq-reverse" /><span class="checkbox-box"></span><span class="checkbox-label">Reverse order</span></label>
+          </div>
+          <div class="collect-btns" style="margin-top:10px">
+            <button id="seq-apply-btn">Sequence</button>
+            <button id="seq-cancel-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats overlay -->
+      <div id="stats-overlay" class="collect-overlay" style="display:none">
+        <div class="collect-box" style="min-width:220px">
+          <p class="collect-title">Project Stats</p>
+          <div id="stats-content" class="stats-grid"></div>
+          <div class="collect-btns" style="margin-top:10px">
+            <button id="stats-close-btn">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Find & Replace overlay -->
+      <div id="fnr-overlay" class="collect-overlay" style="display:none">
+        <div class="collect-box" style="min-width:260px">
+          <p class="collect-title">Find &amp; Replace Expressions</p>
+          <div class="fnr-row">
+            <label class="text-wrapper-3">Find</label>
+            <input type="text" id="fnr-find" class="fnr-input" placeholder="search text..." />
+          </div>
+          <div class="fnr-row">
+            <label class="text-wrapper-3">Replace</label>
+            <input type="text" id="fnr-replace" class="fnr-input" placeholder="replace with..." />
+          </div>
+          <div id="fnr-result" class="fnr-result" style="display:none"></div>
+          <div class="collect-btns" style="margin-top:10px">
+            <button id="fnr-apply-btn">Replace All</button>
+            <button id="fnr-cancel-btn">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="collect-overlay" class="collect-overlay" style="display:none">
+        <div class="collect-box">
+          <div id="collect-mode-section">
+            <p class="collect-title">Collect Files</p>
+            <div class="collect-radios">
+              <label class="radio"><input type="radio" name="collect-mode" value="copy" checked><span class="radio-dot"></span>Copy</label>
+              <label class="radio"><input type="radio" name="collect-mode" value="move"><span class="radio-dot"></span>Move (Cut)</label>
+            </div>
+            <div class="collect-folder-row">
+              <span id="collect-folder-label" class="collect-folder-label">Default: footage/ next to .aep</span>
+              <button id="collect-folder-btn" class="collect-folder-pick-btn">Choose...</button>
+            </div>
+            <div class="collect-btns">
+              <button id="collect-start-btn">Collect</button>
+              <button id="collect-cancel-btn">Cancel</button>
+            </div>
+          </div>
+          <div id="collect-progress-section" style="display:none">
+            <div id="collect-phase-label">Copying files...</div>
+            <div id="collect-file-list"></div>
+            <div class="collect-progress-footer">
+              <div id="collect-overall-count">0 / 0 files</div>
+              <button id="collect-cancel-progress-btn" class="collect-cancel-progress-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="frame">
+        <button class="menu-btn" aria-label="Menu">
+            <img src="./icons/img/menu.svg" alt="Menu" />
+        </button>
+        <div class="scale-controls">
+          <button class="scale-btn" id="scale-down" aria-label="Zoom Out">−</button>
+          <button class="scale-btn" id="scale-up" aria-label="Zoom In">+</button>
+        </div>
+          <div class="color-panel">
+            <div class="color-option" style="--color:#FF4B4B" data-theme="red"></div>
+            <div class="color-option" style="--color:#44D62C" data-theme="green"></div>
+            <div class="color-option" style="--color:#007BFF" data-theme="blue"></div>
+            <div class="color-option" style="--color:#FFD700" data-theme="yellow"></div>
+            <div class="color-option" style="--color:#FF66CC" data-theme="pink"></div>
+          </div>
+        <section class="div-2 anchor-section">
+          <div class="anchor-left">
+            <h3 class="text-wrapper-2">Set Anchor/Null</h3>
+            <div class="frame-2">
+              <div class="div-3">
+                <label for="mode-select" class="text-wrapper-3">Mode:</label>
+                <div class="drop-down">
+                  <select id="mode-select" class="text-wrapper-4">
+                    <option value="selection">Selection</option>
+                    <option value="group">Group</option>
+                    <option value="composition">Composition</option>
+                    <option value="target">Target</option>
+                  </select>
+                  <div class="tdesign-chevron-down" aria-hidden="true">▼</div>
+                </div>
+              </div>
+              <label class="checkbox">
+                <input type="checkbox" class="checkbox-input" aria-label="Ignore Mask" />
+                <span class="checkbox-box"></span>
+                <span class="checkbox-label">Ignore Mask</span>
+              </label>
+            </div>
+            <div class="control-anchor">
+              <div class="control-pad-wrapper">
+              <div class="control-pad" role="group" aria-label="Anchor Position Controls">
+                <button class="button large" aria-label="Top Left">
+                  <img class="img" src="./icons/img/Left Top.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Top Center">
+                  <img class="img" src="./icons/img/top.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Top Right">
+                  <img class="img" src="./icons/img/Right Top.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Middle Left">
+                  <img class="img" src="./icons/img/left.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Center">
+                  <img class="img" src="./icons/img/center.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Middle Right">
+                  <img class="img" src="./icons/img/right.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Bottom Left">
+                  <img class="img" src="./icons/img/Left Bottom.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Bottom Center">
+                  <img class="img" src="./icons/img/Bottom Center.svg" alt="" />
+                </button>
+                <button class="button large" aria-label="Bottom Right">
+                  <img class="img" src="./icons/img/Right Bottom.svg" alt="" />
+                </button>
+              </div>
+              </div>
+              <div class="button-group" role="group" aria-label="Anchor Actions">
+                <button class="img-wrapper" aria-label="Parent" data-tooltip-info="Quick parent to last layer selected">
+                  <img class="img" src="./icons/img/btn_parent.svg" alt="" />
+                </button>
+                <button class="img-wrapper" aria-label="Set Null"
+                  data-tooltip-info="Quick set null for group selected layers. Shift + Click to set null at anchor of each selected layers">
+                  <img class="img" src="./icons/img/btn_setNull.svg" alt="" />
+                </button>
+                <button class="img-wrapper" aria-label="Set Anchor"
+                  data-tooltip-info="Quick set anchor at last layer selected anchor">
+                  <img class="img" src="./icons/img/btn_setAnchor.svg" alt="" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="purge-btn" aria-label="Purge" data-tooltip-info="Purge all memory and disk cache">
+            <img class="img" src="./icons/img/btn_purge.svg" alt="" />
+            <span>PURGE</span>
+          </button>
+        </section>
+        <div class="section-divider"></div>
+        <section class="div-2">
+          <h3 class="text-wrapper-2">Graph Tools</h3>
+          <div class="div-4">
+            <label class="checkbox">
+              <input type="checkbox" class="checkbox-input" id="affect-layer" aria-label="Affect layer" />
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label">Affect layer</span>
+            </label>
+            <div class="div-3" role="group" aria-label="Ease Copy Paste">
+              <button class="img-wrapper" aria-label="Ease Copy"
+                data-tooltip-info="Copy speed and influence of selected keyframes">
+                <img class="img" src="./icons/img/btn_easeCopy.svg" alt="" />
+              </button>
+              <button class="img-wrapper" aria-label="Ease Paste"
+                data-tooltip-info="Paste speed and influence for selected keyframes">
+                <img class="img" src="./icons/img/btn_easePaste.svg" alt="" />
+              </button>
+            </div>
+          </div>
+          <div class="slider-control">
+            <div class="slider">
+              <label for="ease-in-slider" class="text-wrapper-5">Ease In</label>
+              <div class="slider-2">
+                <input type="range" id="ease-in-slider" class="vector-4" min="0" max="100" value="0"
+                  aria-label="Ease In" />
+              </div>
+              <label for="ease-in-input" class="sr-only">Ease In Value</label>
+              <input type="number" id="ease-in-input" class="input" value="0" aria-label="Ease In Value" />
+            </div>
+            <div class="slider">
+              <label for="ease-out-slider" class="text-wrapper-7">Ease Out</label>
+              <div class="slider-2">
+                <input type="range" id="ease-out-slider" class="vector-4" min="0" max="100" value="0"
+                  aria-label="Ease Out" />
+              </div>
+              <label for="ease-out-input" class="sr-only">Ease Out Value</label>
+              <input type="number" id="ease-out-input" class="input" value="0" aria-label="Ease Out Value" />
+            </div>
+            <div class="slider">
+              <label for="both-slider" class="text-wrapper-7">Both</label>
+              <div class="slider-2">
+                <input type="range" id="both-slider" class="vector-4" min="0" max="100" value="0" aria-label="Both" />
+              </div>
+              <label for="both-input" class="sr-only">Both Value</label>
+              <input type="number" id="both-input" class="input" value="0" aria-label="Both Value" />
+            </div>
+          </div>
+          <div class="div-4">
+            <div class="div-3">
+              <label for="speed-input" class="text-wrapper-3">Speed (px/s)</label>
+              <input type="number" id="speed-input" class="div-wrapper" value="0"
+                aria-label="Speed in pixels per second" />
+            </div>
+            <div class="div-3" role="group" aria-label="Animation Effects">
+              <button class="img-wrapper" aria-label="Overshoot"
+                data-tooltip-info="Make overshoot control for selected keyframes. Shift to make a null control">
+                <img class="img" src="./icons/img/btn_overShoot.svg" alt="" />
+              </button>
+              <button class="img-wrapper" aria-label="Bounce"
+                data-tooltip-info="Make bounce control for selected keyframes. Shift to make a null control">
+                <img class="img" src="./icons/img/btn_bounce.svg" alt="" />
+              </button>
+            </div>
+          </div>
+          <div class="button-control" role="group" aria-label="Graph Controls">
+            <button class="button" aria-label="Linear" id="btn-linear">
+              <img class="img" src="./icons/img/btn_linear.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Hold Left" id="btn-holdL">
+              <img class="img" src="./icons/img/btn_holdLeft.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Hold" id="btn-hold">
+              <img class="img" src="./icons/img/btn_hold.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Hold Right" id="btn-holdR">
+              <img class="img" src="./icons/img/btn_holdRight.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Auto bezier" id="btn-auto">
+              <img class="img" src="./icons/img/btn_autoBezier.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Continuous Bezier" id="btn-cont">
+              <img class="img" src="./icons/img/btn_continuousBezier.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Easy Ease Out" id="btn-ease-out">
+              <img class="img" src="./icons/img/btn_easeEasyOut.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Easy Ease In" id="btn-ease-in">
+              <img class="img" src="./icons/img/btn_easeEasyIn.svg" alt="" />
+            </button>
+          </div>
+        </section>
+        <div class="section-divider"></div>
+        <section class="div-2">
+          <h3 class="text-wrapper-2">Label Group Tools</h3>
+          <div class="label-group-control">
+            <div class="drop-down">
+              <select id="label-select" class="text-wrapper-4">
+                <option value="none">None</option>
+                <option value="red">Red</option>
+                <option value="yellow">Yellow</option>
+                <option value="aqua">Aqua</option>
+                <option value="pink">Pink</option>
+                <option value="lavender">Lavender</option>
+                <option value="peach">Peach</option>
+                <option value="seafoam">Seafoam</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="purple">Purple</option>
+                <option value="fuchsia">Fuchsia</option>
+                <option value="tan">Tan</option>
+                <option value="olive">Olive</option>
+                <option value="orange">Orange</option>
+                <option value="brown">Brown</option>
+                <option value="magenta">Magenta</option>
+              </select>
+              <div class="tdesign-chevron-down" aria-hidden="true">▼</div>
+            </div>
+            <button class="button" aria-label="Save Label">
+              <img class="img" src="./icons/img/btn_saveLabel.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Select label"
+                    data-tooltip-info="Control + click to invert selected label. Shift + click to select layer have same label with last selected layer.">
+              <img class="img" src="./icons/img/btn_select.svg" alt="" />
+            </button>
+            <button class="button" aria-label="Enable/Disable"
+                    data-tooltip-info="Control + click to invert Enable/Disable selected layers. Shift + click to enable/disable selected layer.">
+              <img class="img" src="./icons/img/btn_enableDisable.svg" alt="" />
+            </button>
+            <div class="small-divider"></div>
+            <button class="button color-control-btn" aria-label="Color Control" >
+              COLOR
+            </button>
+          </div>
+        </section>
+        <div class="section-divider"></div>
+        <section class="div-2">
+          <h3 class="text-wrapper-2">Utilities</h3>
+          <div class="utilities-row">
+            <button class="img-wrapper" aria-label="Purge"
+              data-tooltip-info="Purge all memory and disk cache">
+              <img class="img" src="./icons/img/btn_purge.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Relink"
+              data-tooltip-info="Search a folder recursively and relink all missing footage by filename">
+              <img class="img" src="./icons/img/btn_relink.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Sort"
+              data-tooltip-info="Organize project items into folders by type. Selected items pulled to root.">
+              <img class="img" src="./icons/img/btn_sort.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Collect"
+              data-tooltip-info="Collect all footage files into a folder next to the .aep file. Copy or Move.">
+              <img class="img" src="./icons/img/btn_collect.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Reduce"
+              data-tooltip-info="Reduce project to selected comp(s). Removes all unused footage and comps. Select comp(s) first.">
+              <img class="img" src="./icons/img/btn_reduce.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Stats"
+              data-tooltip-info="Show project statistics: comps, footage, missing items, total file size">
+              <img class="img" src="./icons/img/btn_stats.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Find Replace"
+              data-tooltip-info="Find & Replace text in all expressions across the entire project">
+              <img class="img" src="./icons/img/btn_findreplace.svg" alt="" />
+            </button>
+          </div>
+        </section>
+        <div class="section-divider"></div>
+        <section class="div-2">
+          <h3 class="text-wrapper-2">Stagger</h3>
+          <div class="stagger-row">
+            <label class="text-wrapper-3">Num</label>
+            <input type="number" id="stagger-num" class="input" value="1" min="0" style="width:46px" />
+            <label class="text-wrapper-3">Step</label>
+            <input type="number" id="stagger-step" class="input" value="1" min="1" style="width:46px" />
+            <button class="img-wrapper" aria-label="Stagger Forward" data-tooltip-info="Stagger forward: each layer shifts later (first stays)">
+              <img class="img" src="./icons/img/btn_staggerFwd.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Stagger Backward" data-tooltip-info="Stagger backward: each layer shifts later in reverse (last stays)">
+              <img class="img" src="./icons/img/btn_staggerBwd.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Stagger Center" data-tooltip-info="Stagger from center outward">
+              <img class="img" src="./icons/img/btn_staggerCtr.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Stagger Random" data-tooltip-info="Stagger each layer by a random offset within range">
+              <img class="img" src="./icons/img/btn_staggerRnd.svg" alt="" />
+            </button>
+            <button class="img-wrapper" aria-label="Align Time" data-tooltip-info="Align all selected layers' in-point to current time (playhead)">
+              <img class="img" src="./icons/img/btn_alignTime.svg" alt="" />
+            </button>
+          </div>
+        </section>
+        <div class="section-divider"></div>
+        <section class="div-2">
+          <h3 class="text-wrapper-2">Time Remap & Loop</h3>
+          <div class="time-remap-panel">
+            <div class="remap-actions">
+              <button class="remap-btn remap-apply" id="btn-remap-apply">reMap</button>
+              <button class="remap-btn remap-delete" id="btn-remap-delete">delete</button>
+              <label class="checkbox">
+                <input type="checkbox" class="checkbox-input" id="remap-minus-frame" />
+                <span class="checkbox-box"></span>
+                <span class="checkbox-label">-1 frame</span>
+              </label>
+            </div>
+            <div class="remap-options">
+              <div class="remap-option-group">
+                <label class="radio"><input type="radio" name="remap-loop" value="off" checked /><span class="radio-dot"></span>OFF</label>
+                <label class="radio"><input type="radio" name="remap-loop" value="loopOut" /><span class="radio-dot"></span>loop OUT</label>
+                <label class="radio"><input type="radio" name="remap-loop" value="loopIn" /><span class="radio-dot"></span>loop IN</label>
+              </div>
+              <div class="remap-option-divider"></div>
+              <div class="remap-option-group">
+                <label class="radio"><input type="radio" name="remap-type" value="cycle" checked /><span class="radio-dot"></span>cycle</label>
+                <label class="radio"><input type="radio" name="remap-type" value="pingpong" /><span class="radio-dot"></span>ping-pong</label>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  </div>
+  <script src="./client/uiHelper.js"></script>
+  <script src="./js/CSInterface.js"></script>
+  <script src="./js/main.js"></script>
+</body>
+
+</html>

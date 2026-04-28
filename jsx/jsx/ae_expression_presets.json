@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Wiggle (2,30)",
+    "code": "wiggle(2,30)"
+  },
+  {
+    "name": "Loop Out (cycle)",
+    "code": "loopOut(\"cycle\")"
+  },
+  {
+    "name": "Time ×100",
+    "code": "time*100"
+  },
+  {
+    "name": "wiggle loop",
+    "code": "frequency = 2; // wiggles per second\namplitude = 40; // amount of pixels to wiggle\nsecondsToLoop = 3; // time to loop in seconds\n// --------\nt = time % secondsToLoop;\nwiggle1 = wiggle(frequency, amplitude, 1, 0.5, t);\nwiggle2 = wiggle(frequency, amplitude, 1, 0.5, t - secondsToLoop);\nlinear(t, 0,  secondsToLoop, wiggle1, wiggle2)"
+  },
+  {
+    "name": "Opacity Flickering",
+    "code": "t = framesToTime(time, thisComp.frameDuration) + (thisLayer.index * 12345);\n\nfunction isPrime(value) {\n    for(var i = 2; i < value; i++) {\n        if(value % i === 0) {\n            return 100;\n        }\n    }\n    return 0;\n}\n\nisPrime(t);"
+  },
+  {
+    "name": "Path Loop",
+    "code": "// Flexible Path Loop\nvar mode = \"cycle\"; // \"cycle\" | \"pingpong\" | \"count\"\nvar repeatCount = 0; \nif (numKeys < 2) {\n    value;\n} else {\n    var t0 = key(1).time;\n    var t1 = key(numKeys).time;\n    var dur = t1 - t0;\n    if (dur <= 0) {\n        valueAtTime(time);\n    } else {\n        if (time <= t1) {\n            valueAtTime(time);\n        } else {\n            var elapsed = time - t0;\n            if (mode == \"cycle\") {\n                var tt = ((elapsed % dur) + t0);\n                valueAtTime(tt);\n            } else if (mode == \"pingpong\") {\n                var n = Math.floor(elapsed / dur);\n                var rem = elapsed - n*dur;\n                var forward = (n % 2) == 0;\n                var tt = forward ? (t0 + rem) : (t1 - rem);\n                valueAtTime(tt);\n            } else if (mode == \"count\") {\n                if (repeatCount <= 0) {\n                    // no repeat specified -> hold last\n                    valueAtTime(t1);\n                } else {\n                    var totalDur = dur * (repeatCount + 1); // original + repeats\n                    if (time >= t0 + totalDur) {\n                        valueAtTime(t1);\n                    } else {\n                        var tt = ((elapsed % dur) + t0);\n                        valueAtTime(tt);\n                    }\n                }\n            } else {\n                valueAtTime(time);\n            }\n        }\n    }\n}\n"
+  },
+  {
+    "name": "Fade In Out_Opacity",
+    "code": "fadeInTime = 1;\nfadeOutTime = 1;\n\nfadeInStart = inPoint;\nfadeInEnd   = inPoint + fadeInTime;\nfadeOutEnd  = outPoint;\nfadeOutStart= outPoint - fadeOutTime;\n\nn = numKeys;\n\n// --- Find max value for fade in ---\nif (n > 0) {\n  idxIn = nearestKey(fadeInStart).index;\n  if (key(idxIn).time < fadeInStart && idxIn < n) {\n    idxIn++;\n  }\n  inVal = key(idxIn).value;\n} else {\n  inVal = value;\n}\n\n// --- Find start value for fade out ---\nif (n > 0) {\n  idxOut = nearestKey(fadeOutEnd).index;\n  if (key(idxOut).time > fadeOutEnd && idxOut > 1) {\n    idxOut--;\n  }\n  outVal = key(idxOut).value;\n} else {\n  outVal = value;\n}\n\nif (time < fadeInEnd) {\n  linear(time, fadeInStart, fadeInEnd, 0, inVal);\n} else if (time < fadeOutStart) {\n  value;\n} else {\n  linear(time, fadeOutStart, fadeOutEnd, outVal, 0);\n}\n"
+  }
+]
