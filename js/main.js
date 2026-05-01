@@ -328,16 +328,36 @@ window.addEventListener("DOMContentLoaded", () => {
         await new Promise(r => setTimeout(r, 0));
 
         const relinkItems = manifest.items.filter(it => fs.existsSync(it.dest));
-        const relinkJson  = JSON.stringify(relinkItems.map(it => ({ id: it.id, dest: it.dest })));
+        const relinkJson  = JSON.stringify(relinkItems.map(it => ({
+          id: it.id, dest: it.dest, isLayered: !!it.isLayered
+        })));
 
-        cs.evalScript(`applyCollectRelink(${JSON.stringify(relinkJson)})`, () => {
+        cs.evalScript(`applyCollectRelink(${JSON.stringify(relinkJson)})`, (json) => {
           phaseLabel.textContent        = `Done! ${collected} / ${total} files collected.`;
           cancelProgressBtn.disabled    = false;
           cancelProgressBtn.textContent = "Close";
           cancelProgressBtn.onclick     = () => { overlay.style.display = "none"; };
 
-          if (errors.length > 0) {
-            alert(`Collected ${collected} / ${total} files\n\nErrors (${errors.length}):\n${errors.slice(0, 10).join("\n")}`);
+          let layeredWarning = "";
+          if (json) {
+            try {
+              const r = JSON.parse(json);
+              if (r.layeredFileCount > 0) {
+                layeredWarning =
+                  `\n\nNote: ${r.layeredFileCount} layered file(s) (PSD/AI/PSB) ` +
+                  `were copied to the new folder but not auto-relinked, because ` +
+                  `relinking would flatten the layers.\n\n` +
+                  `If you move the .aep project, manually re-import these files ` +
+                  `(File > Import) in After Effects.`;
+              }
+            } catch(e) {}
+          }
+
+          if (errors.length > 0 || layeredWarning) {
+            const errMsg = errors.length > 0
+              ? `\n\nErrors (${errors.length}):\n${errors.slice(0, 10).join("\n")}`
+              : "";
+            alert(`Collected ${collected} / ${total} files${layeredWarning}${errMsg}`);
           }
         });
       });

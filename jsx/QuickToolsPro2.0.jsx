@@ -8231,6 +8231,19 @@ function buildCollectManifest(isMove, customDir) {
 
     var items      = [];
     var destNames  = {};
+    var srcToDest  = {};   // shared sources (PSD/AI layers) reuse same dest
+    var srcRefCount = {};  // how many footage items share each source path
+
+    // First pass: count how many footage items reference each source file
+    for (var k = 1; k <= proj.numItems; k++) {
+        var it = proj.item(k);
+        if (!(it instanceof FootageItem)) continue;
+        if (!it.mainSource || !(it.mainSource instanceof FileSource)) continue;
+        if (it.footageMissing) continue;
+        if (!it.mainSource.file || !it.mainSource.file.exists) continue;
+        var p = it.mainSource.file.fsName;
+        srcRefCount[p] = (srcRefCount[p] || 0) + 1;
+    }
 
     for (var i = 1; i <= proj.numItems; i++) {
         var item = proj.item(i);
@@ -8244,6 +8257,26 @@ function buildCollectManifest(isMove, customDir) {
         // Skip if source is already inside the footage folder
         var destCheck = new File(footageDir.fsName + "/" + srcFile.name);
         if (srcFile.fsName === destCheck.fsName) continue;
+
+        // Detect layered footage: multiple footage items share this source file
+        // AND it's a PSD/AI/PSB/EPS file (layers preserved in original import)
+        var lowerName = srcFile.name.toLowerCase();
+        var isLayeredFile = /\.(psd|psb|ai|eps)$/.test(lowerName);
+        var isLayered = isLayeredFile && (srcRefCount[srcFile.fsName] > 1);
+
+        // If this source file was already mapped (e.g. another layer of the same PSD),
+        // reuse the same destination — do NOT copy again, do NOT rename.
+        if (srcToDest[srcFile.fsName]) {
+            items.push({
+                id:        item.id,
+                name:      srcFile.name,
+                src:       srcFile.fsName,
+                dest:      srcToDest[srcFile.fsName],
+                skip:      true,        // already handled by first occurrence
+                isLayered: isLayered    // pass through so JS can warn
+            });
+            continue;
+        }
 
         // Check: dest already exists with same name AND same file size → skip copy, just relink
         var dest = new File(footageDir.fsName + "/" + srcFile.name);
@@ -8265,12 +8298,15 @@ function buildCollectManifest(isMove, customDir) {
             destNames[dest.fsName] = true;
         }
 
+        srcToDest[srcFile.fsName] = dest.fsName;
+
         items.push({
-            id:   item.id,
-            name: srcFile.name,
-            src:  srcFile.fsName,
-            dest: dest.fsName,
-            skip: alreadyCollected
+            id:        item.id,
+            name:      srcFile.name,
+            src:       srcFile.fsName,
+            dest:      dest.fsName,
+            skip:      alreadyCollected,
+            isLayered: isLayered
         });
     }
 
@@ -8282,25 +8318,44 @@ function buildCollectManifest(isMove, customDir) {
 }
 
 // applyCollectRelink: called after Node.js finishes copying.
-// jsonStr is an array of { id, dest } — relinks each item to its new path.
+// jsonStr is an array of { id, dest, isLayered } — relinks each item.
+// Layered footage (PSD/AI/PSB layers) is skipped because item.replace() flattens them.
 function applyCollectRelink(jsonStr) {
     try {
         var mappings = JSON.parse(jsonStr);
         app.beginUndoGroup("Collect Files - Relink");
         var relinked = 0;
+        var skippedLayered = 0;
+        var layeredFiles = {};
         for (var i = 0; i < mappings.length; i++) {
             try {
-                var item = app.project.itemByID(mappings[i].id);
-                if (item) {
-                    item.replace(new File(mappings[i].dest));
-                    relinked++;
+                var m = mappings[i];
+                var item = app.project.itemByID(m.id);
+                if (!item) continue;
+
+                if (m.isLayered) {
+                    // Don't replace — would break layer linkage. Track unique files.
+                    layeredFiles[m.dest] = true;
+                    skippedLayered++;
+                    continue;
                 }
+
+                item.replace(new File(m.dest));
+                relinked++;
             } catch(e) {}
         }
         app.endUndoGroup();
-        return "Relinked " + relinked;
+
+        var layeredFileCount = 0;
+        for (var k in layeredFiles) { if (layeredFiles.hasOwnProperty(k)) layeredFileCount++; }
+
+        return JSON.stringify({
+            relinked: relinked,
+            skippedLayered: skippedLayered,
+            layeredFileCount: layeredFileCount
+        });
     } catch(e) {
-        return "Error: " + e.toString();
+        return JSON.stringify({ error: e.toString() });
     }
 }
 
