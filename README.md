@@ -10,8 +10,8 @@ Developed by **Xavier Chu**
 
 | Platform | Download | Size |
 |----------|----------|------|
-| **Windows** | [⬇ QuickToolsPro-Setup.exe](https://github.com/xyproai-bot/QuickToolsPro/releases/latest/download/QuickToolsPro-Setup.exe) | ~470 KB |
-| **macOS** | [⬇ QuickToolsPro-Mac.zip](https://github.com/xyproai-bot/QuickToolsPro/releases/latest/download/QuickToolsPro-Mac.zip) | ~1 MB |
+| **Windows** | [⬇ QuickToolsPro-Setup.exe](https://github.com/xyproai-bot/QuickToolsPro/releases/latest/download/QuickToolsPro-Setup.exe) | ~2.2 MB |
+| **macOS** | [⬇ QuickToolsPro-Mac.tar.gz](https://github.com/xyproai-bot/QuickToolsPro/releases/latest/download/QuickToolsPro-Mac.tar.gz) | ~660 KB |
 
 > All releases: [github.com/xyproai-bot/QuickToolsPro/releases](https://github.com/xyproai-bot/QuickToolsPro/releases)
 
@@ -21,10 +21,12 @@ Developed by **Xavier Chu**
 
 1. Download **QuickToolsPro-Setup.exe**
 2. Double-click the installer
-3. Click **Yes** on the UAC (admin) prompt
-4. Click **Install**
-5. Restart After Effects
-6. Open: **Window → Extensions → Quick Tool Pro 2.0**
+3. If Windows SmartScreen shows a warning, click **More info → Run anyway**
+   *(the installer is unsigned; this is normal for free / open-source tools)*
+4. Click **Yes** on the UAC (admin) prompt
+5. Follow the wizard: **Next → Install → Finish**
+6. Restart After Effects
+7. Open: **Window → Extensions → Quick Tool Pro 2.0**
 
 **Requirements:** Windows 10 / 11, After Effects 2022 or later
 
@@ -32,16 +34,24 @@ Developed by **Xavier Chu**
 
 ## 🍎 macOS Install
 
-1. Download **QuickToolsPro-Mac.zip**
-2. Double-click to unzip (Safari does this automatically)
-3. Double-click **Install-Mac.command**
-4. Choose install type:
-   - **1) User only** — no admin needed
+1. Download **QuickToolsPro-Mac.tar.gz**
+2. Double-click to extract (Mac handles `.tar.gz` automatically)
+3. Open the extracted **QuickToolsPro-Mac** folder
+4. **Right-click** `Install-Mac.command` → **Open** → **Open anyway**
+   *(macOS Gatekeeper blocks unsigned scripts on first run; right-click bypasses it)*
+5. Choose install type:
+   - **1) User only** — no admin needed (recommended)
    - **2) System-wide** — requires password
-5. Restart After Effects
-6. Open: **Window → Extensions → Quick Tool Pro 2.0**
+6. Restart After Effects
+7. Open: **Window → Extensions → Quick Tool Pro 2.0**
 
-**If macOS blocks the installer:** Right-click `Install-Mac.command` → Open → Open anyway
+**If `Install-Mac.command` won't run at all** (some Macs strip the executable bit):
+
+Open Terminal and run:
+```bash
+chmod +x ~/Downloads/QuickToolsPro-Mac/Install-Mac.command
+```
+Then double-click `Install-Mac.command` again.
 
 **Requirements:** macOS 10.15+, After Effects 2022 or later
 
