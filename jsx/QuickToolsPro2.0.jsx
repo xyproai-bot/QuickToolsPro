@@ -1156,7 +1156,7 @@ function buildOverExpr(useNull, ctrlLayer, effectName) {
         "isAngle = (propName.indexOf('rotation')>=0 || propName.indexOf('angle')>=0 || propName.indexOf('orientation')>=0);\n\n" +
 
         "// If no keyframes return value\n" +
-            "if (numKeys == 0 | (isAngle) && (langle == 1)) {\n" +
+            "if (numKeys == 0 || (isAngle && langle == 1)) {\n" +
             "  value;\n" +
             "} else {\n" +
             "  // nearest past-or-equal key\n" +
@@ -1267,7 +1267,7 @@ function applyOverShootToSelected(useNull) {
                 }
 
             } else {
-                alert("Do not find preset Bounce Controls.ffx");
+                alert("Do not find preset Overshoot Controls.ffx");
             }
     } else {
         // Tạo control trực tiếp trên layer được chọn
@@ -1300,7 +1300,7 @@ function applyOverShootToSelected(useNull) {
         }
 
     } else {
-        alert("Do not find preset Bounce Controls.ffx");
+        alert("Do not find preset Overshoot Controls.ffx");
     }
 
     app.endUndoGroup();
@@ -1316,7 +1316,7 @@ function buildBounceExpr(useNull, ctrlLayer, effectName) {
         "try { gravity = ctl.effect('" + effectName + "')('Gravity').value*150; } catch(e1) { gravity=300; }\n" +
         "try { bounceMax = ctl.effect('" + effectName + "')('Max').value; } catch(e1) { bounceMax=5; }\n" +
         "try { on_off = ctl.effect('" + effectName + "')('Jump In/Out').value; } catch(e1) { on_off=0; }\n" +
-        "try { langle = ctl.effect('" + effectName + "')('Lock Angle').value; } catch(e1) { lx=0; }\n" +
+        "try { langle = ctl.effect('" + effectName + "')('Lock Angle').value; } catch(e1) { langle=0; }\n" +
         "try { lx = ctl.effect('" + effectName + "')('Lock X').value; } catch(e1) { lx=0; }\n" +
         "try { ly = ctl.effect('" + effectName + "')('Lock Y').value; } catch(e1) { ly=0; }\n" +
         "try { lz = ctl.effect('" + effectName + "')('Lock Z').value; } catch(e1) { lz=0; }\n\n" +
@@ -8584,13 +8584,15 @@ function applyTimeRemap(minusFrame, exprString) {
         layer.timeRemapEnabled = true;
 
         if (minusFrame) {
-            var key2Time = layer.timeRemap.keyTime(2);
-            var key2Val = layer.timeRemap.keyValue(2);
-            layer.timeRemap.removeKey(2);
-            var newTime = key2Time - 1 / fps;
-            var newVal = key2Val - 1 / fps;
-            layer.timeRemap.addKey(newTime);
-            layer.timeRemap.setValueAtKey(2, newVal);
+            if (layer.timeRemap.numKeys >= 2) {
+                var key2Time = layer.timeRemap.keyTime(2);
+                var key2Val = layer.timeRemap.keyValue(2);
+                layer.timeRemap.removeKey(2);
+                var newTime = key2Time - 1 / fps;
+                var newVal = key2Val - 1 / fps;
+                layer.timeRemap.addKey(newTime);
+                layer.timeRemap.setValueAtKey(2, newVal);
+            }
         }
 
         layer.timeRemap.expression = exprString;
@@ -8796,10 +8798,11 @@ function wiggleControllerUI() {
         expr += "var amp = thisLayer.effect('" + ampSlider + "')('Slider').value;\n";
 
         if (useLoop) {
-            expr += "var loopDur = " + loopSec + ";\n";
-            expr += "var t = time % loopDur;\n";
-            expr += "seedRandom(0, true);\n";
-            expr += "wiggle(freq, amp, 1, 0.5, t);\n";
+            expr += "var loopTime = " + loopSec + ";\n";
+            expr += "var t = time % loopTime;\n";
+            expr += "var wiggle1 = wiggle(freq, amp, 1, 0.5, t);\n";
+            expr += "var wiggle2 = wiggle(freq, amp, 1, 0.5, t - loopTime);\n";
+            expr += "linear(t, 0, loopTime, wiggle1, wiggle2);\n";
         } else {
             expr += "wiggle(freq, amp);\n";
         }
@@ -8868,7 +8871,6 @@ function wiggleControllerUI() {
         }
 
         app.endUndoGroup();
-        win.close();
     };
 
     // Remove
@@ -8902,7 +8904,6 @@ function wiggleControllerUI() {
         }
 
         app.endUndoGroup();
-        win.close();
     };
 
     win.center();
