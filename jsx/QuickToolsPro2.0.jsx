@@ -7147,8 +7147,6 @@ function createNullAtAnchorWithRotation() {
 
 // Hàm Parent to target
 function parentSelectedLayersToLast() {
-    app.beginUndoGroup("Parent to Last Selected");
-
     var comp = app.project.activeItem;
     if (!(comp && comp instanceof CompItem)) {
         alert("Comp not active");
@@ -7160,6 +7158,8 @@ function parentSelectedLayersToLast() {
         alert("At least 2 layers must be selected");
         return;
     }
+
+    app.beginUndoGroup("Parent to Last Selected");
 
     var target = selLayers[selLayers.length - 1];
     var layersToProcess = [];
@@ -8903,9 +8903,13 @@ function wiggleControllerUI() {
 
         if (selProps.length === 0) { alert("Select at least one property."); return; }
 
-        app.beginUndoGroup("Apply Wiggle Controller");
+        // Re-fetch comp and selection because the window may stay open across changes
+        var curComp = app.project.activeItem;
+        if (!(curComp instanceof CompItem)) { alert("Select a composition first."); return; }
+        var layers = curComp.selectedLayers;
+        if (layers.length === 0) { alert("Select at least one layer."); return; }
 
-        var layers = comp.selectedLayers;
+        app.beginUndoGroup("Apply Wiggle Controller");
         for (var i = 0; i < layers.length; i++) {
             var layer = layers[i];
             var effects = layer.property("Effects");
@@ -8954,9 +8958,12 @@ function wiggleControllerUI() {
 
     // Remove
     btnRemove.onClick = function() {
-        app.beginUndoGroup("Remove Wiggle Controller");
+        var curComp = app.project.activeItem;
+        if (!(curComp instanceof CompItem)) { alert("Select a composition first."); return; }
+        var layers = curComp.selectedLayers;
+        if (layers.length === 0) { alert("Select at least one layer."); return; }
 
-        var layers = comp.selectedLayers;
+        app.beginUndoGroup("Remove Wiggle Controller");
         var propNames = ["Position", "Rotation", "Z Rotation", "Scale", "Opacity"];
 
         for (var i = 0; i < layers.length; i++) {

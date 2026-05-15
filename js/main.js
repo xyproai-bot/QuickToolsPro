@@ -8,6 +8,20 @@ function showToast(msg, type, duration) {
   t._timer = setTimeout(() => { t.className = ""; }, duration || 3000);
 }
 
+// HTML-escape user content before inserting via innerHTML
+function _escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+// Detect AE evalScript error response — JSX threw or panel sandbox error
+function _isEvalError(res) {
+  return typeof res === "string" && (
+    res.indexOf("EvalScript error") === 0 || res === "EvalScript error."
+  );
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   const cs = new CSInterface();
 
@@ -111,7 +125,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!btn) return;
     btn.addEventListener("click", () => {
       cs.evalScript(jsx, (res) => {
-        if (toast) showToast(toast, "ok");
+        if (toast && !_isEvalError(res)) showToast(toast, "ok");
       });
     });
   });
@@ -254,8 +268,9 @@ window.addEventListener("DOMContentLoaded", () => {
           const item = manifest.items[i];
           const row = document.createElement("div");
           row.className = "cfi";
+          const safeName = _escapeHtml(item.name);
           row.innerHTML = `
-            <div class="cfi-name" title="${item.name}">${item.name}</div>
+            <div class="cfi-name" title="${safeName}">${safeName}</div>
             <div class="cfi-row">
               <div class="cfi-bar-wrap"><div class="cfi-bar"></div></div>
               <div class="cfi-pct">0%</div>
@@ -633,9 +648,10 @@ window.addEventListener("DOMContentLoaded", () => {
     seqApplyBtn.onclick = () => {
       const overlap = parseInt(seqOverlap.value) || 0;
       const rev = seqReverse.checked;
-      cs.evalScript(`sequenceLayers(${overlap}, ${rev})`);
       seqOverlay.style.display = "none";
-      showToast("Layers sequenced", "ok");
+      cs.evalScript(`sequenceLayers(${overlap}, ${rev})`, (res) => {
+        if (!_isEvalError(res)) showToast("Layers sequenced", "ok");
+      });
     };
   }
 
@@ -766,8 +782,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const alignTimeBtn = document.querySelector('[aria-label="Align Time"]');
   if (alignTimeBtn) {
     alignTimeBtn.addEventListener("click", () => {
-      cs.evalScript("alignLayersToCurrentTime()");
-      showToast("Layers aligned", "ok");
+      cs.evalScript("alignLayersToCurrentTime()", (res) => {
+        if (!_isEvalError(res)) showToast("Layers aligned", "ok");
+      });
     });
   }
 

@@ -67,8 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (savedColor) {
     document.documentElement.style.setProperty('--mainColor', savedColor);
-    updateIconFolder(savedTheme);
   }
+  // Always sync icon folder + active indicator to saved/default theme
+  updateIconFolder(savedTheme);
   updateActiveTheme(savedTheme);
 
   menuBtn.addEventListener('click', (e) => {
