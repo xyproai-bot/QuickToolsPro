@@ -9197,22 +9197,79 @@ function _collectSelectedKeys(comp) {
     return list;
 }
 
-// Internal: move keys to (origTime + delta). Preserves interpolation/eases via setKeyTime.
+// Internal: move keys to (origTime + delta).
+// AE has no setKeyTime — we snapshot each key, remove, then re-add at new time
+// while preserving value, temporal interpolation/ease, and spatial tangents.
 function _moveKeysWithDelta(keyList, deltas) {
-    // Tag each with target time
+    // Snapshot per key
     for (var j = 0; j < keyList.length; j++) {
-        keyList[j].newTime = keyList[j].origTime + deltas[j];
-    }
-    // Move in descending order of newTime so we don't collide with neighbors
-    var ordered = keyList.slice().sort(function(a, b) { return b.newTime - a.newTime; });
-    for (var m = 0; m < ordered.length; m++) {
-        var it = ordered[m];
-        var found = -1;
-        for (var idx = 1; idx <= it.prop.numKeys; idx++) {
-            if (Math.abs(it.prop.keyTime(idx) - it.origTime) < 0.0001) { found = idx; break; }
+        var k = keyList[j];
+        k.newTime = k.origTime + deltas[j];
+        var idx = -1;
+        for (var i = 1; i <= k.prop.numKeys; i++) {
+            if (Math.abs(k.prop.keyTime(i) - k.origTime) < 0.0001) { idx = i; break; }
         }
-        if (found > 0) {
-            try { it.prop.setKeyTime(found, it.newTime); it.origTime = it.newTime; } catch(e) {}
+        if (idx < 0) continue;
+        try { k.value     = k.prop.keyValue(idx); } catch(e) {}
+        try { k.inInterp  = k.prop.keyInInterpolationType(idx); } catch(e) {}
+        try { k.outInterp = k.prop.keyOutInterpolationType(idx); } catch(e) {}
+        try { k.inEase    = k.prop.keyInTemporalEase(idx); } catch(e) {}
+        try { k.outEase   = k.prop.keyOutTemporalEase(idx); } catch(e) {}
+        try { k.spatialIn  = k.prop.keyInSpatialTangent(idx); } catch(e) {}
+        try { k.spatialOut = k.prop.keyOutSpatialTangent(idx); } catch(e) {}
+        try { k.roving    = k.prop.keyRoving(idx); } catch(e) {}
+    }
+
+    // Group keys by their property (identity compare)
+    var groups = [];
+    for (var g = 0; g < keyList.length; g++) {
+        var found = -1;
+        for (var gi = 0; gi < groups.length; gi++) {
+            if (groups[gi].prop === keyList[g].prop) { found = gi; break; }
+        }
+        if (found < 0) groups.push({ prop: keyList[g].prop, keys: [keyList[g]] });
+        else           groups[found].keys.push(keyList[g]);
+    }
+
+    // For each prop: remove all selected keys (reverse index), then add at new times
+    for (var bg = 0; bg < groups.length; bg++) {
+        var grp = groups[bg];
+
+        // Resolve current indices by original time
+        var toRemove = [];
+        for (var rk = 0; rk < grp.keys.length; rk++) {
+            for (var ri = 1; ri <= grp.prop.numKeys; ri++) {
+                if (Math.abs(grp.prop.keyTime(ri) - grp.keys[rk].origTime) < 0.0001) {
+                    toRemove.push(ri); break;
+                }
+            }
+        }
+        toRemove.sort(function(a, b) { return b - a; });
+        for (var rr = 0; rr < toRemove.length; rr++) {
+            try { grp.prop.removeKey(toRemove[rr]); } catch(e) {}
+        }
+
+        // Re-add at new times
+        for (var ak = 0; ak < grp.keys.length; ak++) {
+            var s = grp.keys[ak];
+            try {
+                var newIdx = grp.prop.addKey(s.newTime);
+                if (s.value !== undefined) {
+                    try { grp.prop.setValueAtKey(newIdx, s.value); } catch(e) {}
+                }
+                if (s.inInterp !== undefined && s.outInterp !== undefined) {
+                    try { grp.prop.setInterpolationTypeAtKey(newIdx, s.inInterp, s.outInterp); } catch(e) {}
+                }
+                if (s.inEase !== undefined && s.outEase !== undefined) {
+                    try { grp.prop.setTemporalEaseAtKey(newIdx, s.inEase, s.outEase); } catch(e) {}
+                }
+                if (s.spatialIn !== undefined && s.spatialOut !== undefined) {
+                    try { grp.prop.setSpatialTangentsAtKey(newIdx, s.spatialIn, s.spatialOut); } catch(e) {}
+                }
+                if (s.roving === true) {
+                    try { grp.prop.setRovingAtKey(newIdx, true); } catch(e) {}
+                }
+            } catch(e) {}
         }
     }
 }
@@ -9226,22 +9283,55 @@ function staggerLayers(numFrames, stepEvery, mode) {
     var step      = Math.max(1, stepEvery || 1);
 
     // ── If user has selected keys, operate on KEYS, not layers ──────────────
+    // Keys are grouped by LAYER — each layer's whole key set shifts as a unit
     var selectedKeys = _collectSelectedKeys(comp);
     if (selectedKeys.length > 0) {
         app.beginUndoGroup("Stagger Keys");
-        var nk = selectedKeys.length;
-        var maxRanksK = Math.floor((nk - 1) / step);
-        var deltas = [];
-        for (var jk = 0; jk < nk; jk++) {
-            var rankK = Math.floor(jk / step);
-            var d = 0;
-            if (mode === "forward")       d = rankK * offsetSec;
-            else if (mode === "backward") d = (maxRanksK - rankK) * offsetSec;
-            else if (mode === "center")   d = Math.abs(rankK - maxRanksK / 2) * offsetSec;
-            else                          d = Math.random() * maxRanksK * offsetSec;
-            deltas.push(d);
+
+        // Group keys by their owning layer (use layer.index as key)
+        var layerGroups = []; // [{layerIndex, keys: [...]}]
+        for (var sk = 0; sk < selectedKeys.length; sk++) {
+            var ownerLayer = null;
+            try { ownerLayer = selectedKeys[sk].prop.propertyGroup(selectedKeys[sk].prop.propertyDepth); } catch(e) {}
+            var lid = ownerLayer ? ownerLayer.index : -1;
+            var slot = -1;
+            for (var lg = 0; lg < layerGroups.length; lg++) {
+                if (layerGroups[lg].layerIndex === lid) { slot = lg; break; }
+            }
+            if (slot < 0) {
+                layerGroups.push({ layerIndex: lid, keys: [selectedKeys[sk]] });
+            } else {
+                layerGroups[slot].keys.push(selectedKeys[sk]);
+            }
         }
-        _moveKeysWithDelta(selectedKeys, deltas);
+
+        // Sort layer groups by layer index (top → bottom)
+        layerGroups.sort(function(a, b) { return a.layerIndex - b.layerIndex; });
+
+        var nGroups   = layerGroups.length;
+        var maxRanksK = Math.floor((nGroups - 1) / step);
+        var groupDeltas = [];
+        for (var gi = 0; gi < nGroups; gi++) {
+            var rankG = Math.floor(gi / step);
+            var d = 0;
+            if (mode === "forward")       d = rankG * offsetSec;
+            else if (mode === "backward") d = (maxRanksK - rankG) * offsetSec;
+            else if (mode === "center")   d = Math.abs(rankG - maxRanksK / 2) * offsetSec;
+            else                          d = Math.random() * maxRanksK * offsetSec; // ONE random per layer
+            groupDeltas.push(d);
+        }
+
+        // Build per-key delta from group delta
+        var allKeys = [];
+        var allDeltas = [];
+        for (var gj = 0; gj < layerGroups.length; gj++) {
+            for (var gk = 0; gk < layerGroups[gj].keys.length; gk++) {
+                allKeys.push(layerGroups[gj].keys[gk]);
+                allDeltas.push(groupDeltas[gj]);
+            }
+        }
+
+        _moveKeysWithDelta(allKeys, allDeltas);
         app.endUndoGroup();
         return;
     }
