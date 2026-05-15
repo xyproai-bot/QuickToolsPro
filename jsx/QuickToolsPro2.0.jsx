@@ -8245,6 +8245,44 @@ function buildCollectManifest(isMove, customDir) {
         srcRefCount[p] = (srcRefCount[p] || 0) + 1;
     }
 
+    // Helper: detect sequence and return list of frame files on disk.
+    // Returns null if not a sequence (or only one frame found).
+    function _escapeRe(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    function getSequenceFrames(srcFile, item) {
+        var lname = srcFile.name.toLowerCase();
+        var stillExt = /\.(exr|png|jpg|jpeg|tga|tif|tiff|dpx|iff|cin|hdr|bmp|sgi|pict|pic)$/;
+        if (!stillExt.test(lname)) return null;
+        try {
+            if (item.mainSource.isStill === true) return null;
+        } catch(e) { return null; }
+
+        var m = srcFile.name.match(/^(.*?)(\d+)(\.[^.]+)$/);
+        if (!m) return null;
+        var prefix = m[1], digits = m[2].length, ext = m[3];
+
+        var folder = srcFile.parent;
+        if (!folder) return null;
+        var all;
+        try { all = folder.getFiles(); } catch(e) { return null; }
+        if (!all) return null;
+
+        var re = new RegExp("^" + _escapeRe(prefix) + "\\d{" + digits + "}" + _escapeRe(ext) + "$", "i");
+        var frames = [];
+        for (var fi = 0; fi < all.length; fi++) {
+            if (all[fi] instanceof File && re.test(all[fi].name)) {
+                frames.push(all[fi]);
+            }
+        }
+        if (frames.length < 2) return null;
+        // Sort alphabetically (same as numerical for zero-padded names)
+        frames.sort(function(a, b) {
+            return (a.name < b.name) ? -1 : (a.name > b.name ? 1 : 0);
+        });
+        return frames;
+    }
+
     for (var i = 1; i <= proj.numItems; i++) {
         var item = proj.item(i);
         if (!(item instanceof FootageItem)) continue;
@@ -8300,14 +8338,39 @@ function buildCollectManifest(isMove, customDir) {
 
         srcToDest[srcFile.fsName] = dest.fsName;
 
+        // Detect image sequence (multiple numbered frames on disk)
+        var seqFrames = isLayered ? null : getSequenceFrames(srcFile, item);
+
         items.push({
-            id:        item.id,
-            name:      srcFile.name,
-            src:       srcFile.fsName,
-            dest:      dest.fsName,
-            skip:      alreadyCollected,
-            isLayered: isLayered
+            id:         item.id,
+            name:       srcFile.name,
+            src:        srcFile.fsName,
+            dest:       dest.fsName,
+            skip:       alreadyCollected,
+            isLayered:  isLayered,
+            isSequence: !!seqFrames   // primary frame — relink uses replaceWithSequence
         });
+
+        // Add all the other frames as plain copy items (no AE relink needed)
+        if (seqFrames) {
+            for (var sf = 0; sf < seqFrames.length; sf++) {
+                var frameFile = seqFrames[sf];
+                if (frameFile.fsName === srcFile.fsName) continue; // primary already added
+                var frameDest = new File(footageDir.fsName + "/" + frameFile.name);
+                var frameAlready = (frameDest.exists && frameDest.length === frameFile.length);
+                if (!frameAlready) destNames[frameDest.fsName] = true;
+                items.push({
+                    id:            0,
+                    name:          frameFile.name,
+                    src:           frameFile.fsName,
+                    dest:          frameDest.fsName,
+                    skip:          frameAlready,
+                    isLayered:     false,
+                    isSequence:    false,
+                    isSeqExtra:    true   // just a file copy, no AE relink
+                });
+            }
+        }
     }
 
     return JSON.stringify({
@@ -8318,8 +8381,10 @@ function buildCollectManifest(isMove, customDir) {
 }
 
 // applyCollectRelink: called after Node.js finishes copying.
-// jsonStr is an array of { id, dest, isLayered } — relinks each item.
+// jsonStr is an array of { id, dest, isLayered, isSequence, isSeqExtra } — relinks each item.
 // Layered footage (PSD/AI/PSB layers) is skipped because item.replace() flattens them.
+// Sequence primary frames use replaceWithSequence so AE rebuilds the sequence.
+// Sequence extras are pure file copies — no AE relink needed.
 function applyCollectRelink(jsonStr) {
     try {
         var mappings = JSON.parse(jsonStr);
@@ -8330,13 +8395,27 @@ function applyCollectRelink(jsonStr) {
         for (var i = 0; i < mappings.length; i++) {
             try {
                 var m = mappings[i];
+
+                if (m.isSeqExtra) continue; // already copied, no relink
+
+                if (!m.id) continue;
                 var item = app.project.itemByID(m.id);
                 if (!item) continue;
 
                 if (m.isLayered) {
-                    // Don't replace — would break layer linkage. Track unique files.
                     layeredFiles[m.dest] = true;
                     skippedLayered++;
+                    continue;
+                }
+
+                if (m.isSequence) {
+                    try {
+                        item.replaceWithSequence(new File(m.dest), false);
+                    } catch(eSeq) {
+                        // Fallback to normal replace if sequence method fails
+                        item.replace(new File(m.dest));
+                    }
+                    relinked++;
                     continue;
                 }
 

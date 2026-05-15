@@ -329,7 +329,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
         const relinkItems = manifest.items.filter(it => fs.existsSync(it.dest));
         const relinkJson  = JSON.stringify(relinkItems.map(it => ({
-          id: it.id, dest: it.dest, isLayered: !!it.isLayered
+          id:         it.id,
+          dest:       it.dest,
+          isLayered:  !!it.isLayered,
+          isSequence: !!it.isSequence,
+          isSeqExtra: !!it.isSeqExtra
         })));
 
         cs.evalScript(`applyCollectRelink(${JSON.stringify(relinkJson)})`, (json) => {
