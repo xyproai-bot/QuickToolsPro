@@ -9180,15 +9180,75 @@ function relinkMissingFootage(folderPath) {
 // chosen mode: forward, backward, or center-out.
 // stepEvery: apply offset every N layers (1 = every layer)
 // ============================================================
+// Internal: collect selected keys across selected props.
+// Returns array of { prop, origTime } sorted by original time.
+function _collectSelectedKeys(comp) {
+    var list = [];
+    var selProps = comp.selectedProperties;
+    if (!selProps) return list;
+    for (var p = 0; p < selProps.length; p++) {
+        var prop = selProps[p];
+        if (!prop || !prop.selectedKeys || prop.selectedKeys.length === 0) continue;
+        for (var k = 0; k < prop.selectedKeys.length; k++) {
+            list.push({ prop: prop, origTime: prop.keyTime(prop.selectedKeys[k]) });
+        }
+    }
+    list.sort(function(a, b) { return a.origTime - b.origTime; });
+    return list;
+}
+
+// Internal: move keys to (origTime + delta). Preserves interpolation/eases via setKeyTime.
+function _moveKeysWithDelta(keyList, deltas) {
+    // Tag each with target time
+    for (var j = 0; j < keyList.length; j++) {
+        keyList[j].newTime = keyList[j].origTime + deltas[j];
+    }
+    // Move in descending order of newTime so we don't collide with neighbors
+    var ordered = keyList.slice().sort(function(a, b) { return b.newTime - a.newTime; });
+    for (var m = 0; m < ordered.length; m++) {
+        var it = ordered[m];
+        var found = -1;
+        for (var idx = 1; idx <= it.prop.numKeys; idx++) {
+            if (Math.abs(it.prop.keyTime(idx) - it.origTime) < 0.0001) { found = idx; break; }
+        }
+        if (found > 0) {
+            try { it.prop.setKeyTime(found, it.newTime); it.origTime = it.newTime; } catch(e) {}
+        }
+    }
+}
+
 function staggerLayers(numFrames, stepEvery, mode) {
     var comp = app.project.activeItem;
     if (!(comp instanceof CompItem)) { alert("Select a composition first."); return; }
-    var layers = comp.selectedLayers;
-    if (layers.length === 0) { alert("Select at least one layer."); return; }
 
     var fps       = comp.frameRate;
     var offsetSec = (numFrames || 1) / fps;
     var step      = Math.max(1, stepEvery || 1);
+
+    // ── If user has selected keys, operate on KEYS, not layers ──────────────
+    var selectedKeys = _collectSelectedKeys(comp);
+    if (selectedKeys.length > 0) {
+        app.beginUndoGroup("Stagger Keys");
+        var nk = selectedKeys.length;
+        var maxRanksK = Math.floor((nk - 1) / step);
+        var deltas = [];
+        for (var jk = 0; jk < nk; jk++) {
+            var rankK = Math.floor(jk / step);
+            var d = 0;
+            if (mode === "forward")       d = rankK * offsetSec;
+            else if (mode === "backward") d = (maxRanksK - rankK) * offsetSec;
+            else if (mode === "center")   d = Math.abs(rankK - maxRanksK / 2) * offsetSec;
+            else                          d = Math.random() * maxRanksK * offsetSec;
+            deltas.push(d);
+        }
+        _moveKeysWithDelta(selectedKeys, deltas);
+        app.endUndoGroup();
+        return;
+    }
+
+    // ── Otherwise stagger layers ───────────────────────────────────────────
+    var layers = comp.selectedLayers;
+    if (layers.length === 0) { alert("Select at least one layer (or some keyframes)."); return; }
 
     // Sort by layer index (top to bottom)
     var sorted = [];
@@ -9230,11 +9290,27 @@ function staggerLayers(numFrames, stepEvery, mode) {
 function alignLayersToCurrentTime() {
     var comp = app.project.activeItem;
     if (!(comp instanceof CompItem)) { alert("Select a composition first."); return; }
-    var layers = comp.selectedLayers;
-    if (layers.length === 0) { alert("Select at least one layer."); return; }
-
-    app.beginUndoGroup("Align to Current Time");
     var t = comp.time;
+
+    // ── If user has selected keys, align KEYS instead ──────────────────────
+    var selectedKeys = _collectSelectedKeys(comp);
+    if (selectedKeys.length > 0) {
+        app.beginUndoGroup("Align Keys to Current Time");
+        // Shift all selected keys so the earliest one lands on playhead
+        var firstTime = selectedKeys[0].origTime;
+        var shift = t - firstTime;
+        var deltas = [];
+        for (var k = 0; k < selectedKeys.length; k++) deltas.push(shift);
+        _moveKeysWithDelta(selectedKeys, deltas);
+        app.endUndoGroup();
+        return;
+    }
+
+    // ── Otherwise align layers ─────────────────────────────────────────────
+    var layers = comp.selectedLayers;
+    if (layers.length === 0) { alert("Select at least one layer (or some keyframes)."); return; }
+
+    app.beginUndoGroup("Align Layers to Current Time");
     for (var i = 0; i < layers.length; i++) {
         var layer = layers[i];
         layer.startTime = layer.startTime + (t - layer.inPoint);
