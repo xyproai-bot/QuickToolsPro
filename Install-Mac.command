@@ -44,6 +44,9 @@ if [ "$CHOICE" = "2" ]; then
 
     # Copy
     sudo cp -R "$SRC" "$DEST"
+
+    # Remove quarantine attribute (files from downloaded zips are otherwise blocked)
+    sudo xattr -dr com.apple.quarantine "$DEST" 2>/dev/null
 else
     DEST="$DEST_USER"
     echo ""
@@ -60,6 +63,9 @@ else
 
     # Copy
     cp -R "$SRC" "$DEST"
+
+    # Remove quarantine attribute (files from downloaded zips are otherwise blocked)
+    xattr -dr com.apple.quarantine "$DEST" 2>/dev/null
 fi
 
 # Enable unsigned extensions for all AE versions (CSXS 6 = CS6 ... CSXS 12 = AE 2024/2025/2026)
