@@ -2,7 +2,7 @@
 <ExtensionManifest 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     ExtensionBundleId="com.xcmotion.quicktoolpro"
-    ExtensionBundleVersion="1.0.001" Version="11.0"
+    ExtensionBundleVersion="1.0.8" Version="12.0"
     ExtensionBundleName="Quick Tools Pro 2.0"
     >
 
@@ -12,7 +12,7 @@
 
     <ExecutionEnvironment>
         <HostList>
-            <Host Name="AEFT" Version="13.0"/>
+            <Host Name="AEFT" Version="[13.0,99.9]"/>
         </HostList>
 
         <LocaleList>
