@@ -2,7 +2,7 @@
 <ExtensionManifest 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     ExtensionBundleId="com.xcmotion.quicktoolpro"
-    ExtensionBundleVersion="1.0.9" Version="12.0"
+    ExtensionBundleVersion="1.0.10" Version="12.0"
     ExtensionBundleName="Quick Tools Pro 2.0"
     >
 

@@ -62,8 +62,10 @@ else
     cp -R "$SRC" "$DEST"
 fi
 
-# Enable unsigned extensions for AE (required on some versions)
-defaults write com.adobe.CSXS.11 PlayerDebugMode 1 2>/dev/null
+# Enable unsigned extensions for all AE versions (CSXS 6 = CS6 ... CSXS 12 = AE 2024/2025/2026)
+for v in 6 7 8 9 10 11 12; do
+    defaults write "com.adobe.CSXS.$v" PlayerDebugMode 1 2>/dev/null
+done
 
 echo ""
 echo "Installed successfully!"
