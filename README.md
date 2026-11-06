@@ -2,7 +2,7 @@
 
 A comprehensive After Effects extension with 50+ quick-access tools for motion graphics, animation, and project management.
 
-Developed by **Xavier Chu**
+Modified and maintained by **haimiaan**. Based on Quick Tools by **Xavier Chu**, used under the MIT License.
 
 ---
 
@@ -157,6 +157,10 @@ MIT License — see [LICENSE](LICENSE) file.
 
 ## 📧 Contact
 
-Xavier Chu — xc232192@gmail.com
+Questions and bug reports: [GitHub Issues](https://github.com/xyproai-bot/QuickToolsPro/issues)
 
-© 2025 Xavier Chu
+## 🙏 Credits
+
+Original Quick Tools by Xavier Chu (MIT License). This version is modified and maintained by haimiaan.
+
+© 2025 Xavier Chu · © 2026 haimiaan
